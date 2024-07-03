@@ -1,0 +1,15 @@
+linux:
+ubuntu:
+    - python3-tk
+    - libappindicator3-dev
+    - gir1.2-appindicator3-0.1
+    - xclip | xselect
+    ? libcairo2-dev
+fedora:
+    - libappindicator-gtk3
+
+macos:
+    - python-tk
+
+windows:
+    https://github.com/tschoonj/GTK-for-Windows-Runtime-Environment-Installer/releases/download/2022-01-04/gtk3-runtime-3.24.31-2022-01-04-ts-win64.exe
