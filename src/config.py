@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import os
 import pathlib
-import tkinter as tk
 from tkinter import filedialog
 
 
@@ -61,8 +60,8 @@ class Config:
 
 
 def open_file_selector():
-    root = tk.Tk()
-    root.withdraw()  # Ocultar la ventana de Tkinter
+    # root = tk.Tk()
+    # root.withdraw()  # Ocultar la ventana de Tkinter
     file_path = filedialog.askopenfilename()  # Abrir el selector de archivos
-    root.quit()
+    # root.quit()
     return file_path

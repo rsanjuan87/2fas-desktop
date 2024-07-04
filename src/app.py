@@ -31,10 +31,14 @@ import cairosvg
 here = pathlib.Path(__file__).parent.parent
 
 app_name = "2FAS Desktop"
+app_version = "0.0.2(β)"
+app_web = "https://github.com/rsanjuan87/2fas-desktop"
 
 
 class TwoFactorDesktop(object):
     def __init__(self):
+        self.root = tk.Tk()
+        self.root.withdraw()  # Hide the main window
         self.otp_menu_items = []
         self.otp_menu = None
         self.trayConfig = MenuItem(
@@ -63,6 +67,7 @@ class TwoFactorDesktop(object):
                 )
             ),
             pystray.Menu.SEPARATOR,
+            MenuItem("About", self.show_about),
             pystray.MenuItem("Exit", self.stop),
         ]
 
@@ -186,6 +191,8 @@ class TwoFactorDesktop(object):
         logging.info("Stopping")
         self.do_update = False
         threading.Thread(name="icon", target=lambda: self.clean, daemon=True).start()
+        self.root.quit()
+        self.root.destroy()
         time.sleep(1)
         os.kill(os.getpid(), signal.SIGINT)
         time.sleep(1)
@@ -247,22 +254,39 @@ class TwoFactorDesktop(object):
             self.conf.defaultPassword = password
             self.conf.save()
 
+    def show_about(self):
+        # root = tk.Tk()
+        # root.withdraw()  # Hide the main window
+        messagebox.showinfo(app_name,
+                            f"{app_name}\n"
+                            f"{app_web}\n"
+                            f"\n"
+                            f"Version {app_version}\n"
+                            f"\n"
+                            f"\n"
+                            f"{app_name} is not associated with 2FAS\n"
+                            f"Uses python 2fas to work\n"
+                            f"Based on crmarsh/2fas-desktop\n"
+                            f"Provided AS IS\n"
+                            )
+        # root.quit()  # Clean up root window
+
 
 def draw_timer(item) -> str:
     return f"Time left: {int(time_until_cycle())} sec"
 
 
 def prompt_password_gui(prompt="Password: ") -> str | None:
-    root = tk.Tk()
-    root.withdraw()  # Hide the main window
+    # root = tk.Tk()
+    # root.withdraw()  # Hide the main window
     password = simpledialog.askstring("Password Input", prompt, show='*')
-    root.quit()  # Clean up root window
+    # root.quit()  # Clean up root window
     return password
 
 
-def svg_to_image(svg_path: str) -> Image.Image:
+def svg_to_image(svg_path: str, height=32, width=32) -> Image.Image:
     # Convertir SVG a PNG en memoria
-    png_data = cairosvg.svg2png(url=svg_path, output_height=32, output_width=32)
+    png_data = cairosvg.svg2png(url=svg_path, output_height=height, output_width=width)
     # Cargar PNG desde datos en memoria
     image = Image.open(io.BytesIO(png_data))
     return image
