@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>2FAS Local OTP</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <section class="otp-panel">
+      <div class="toolbar">
+        <input type="search" id="search" placeholder="Buscar..." />
+        <span id="timer" class="timer"></span>
+        <button id="admin-btn" class="icon-btn" title="Ajustes">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M12 1v6m0 6v6M4.22 4.22l4.24 4.24m2.12 2.12l4.24 4.24M1 12h6m6 0h6m-17.78 7.78l4.24-4.24m2.12-2.12l4.24-4.24"/>
+          </svg>
+        </button>
+      </div>
+      <div id="otp-list" class="otp-list"></div>
+      <span id="status" class="status"></span>
+    </section>
+
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>

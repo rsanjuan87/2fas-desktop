@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>2FAS Local OTP - Gestor</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body class="full">
+    <header>
+      <h1>2FAS Local OTP</h1>
+      <p class="subtitle">Gestor persistente para cargar el archivo y desbloquear.</p>
+    </header>
+
+    <section class="panel" id="file-panel">
+      <div class="row">
+        <input type="file" id="file-input" accept=".2fas,application/json" />
+        <button id="load-file">Cargar archivo</button>
+      </div>
+      <div class="row">
+        <input
+          type="password"
+          id="passphrase"
+          placeholder="Contraseña del backup (si aplica)"
+          autocomplete="current-password"
+        />
+        <button id="unlock">Desbloquear</button>
+      </div>
+      <div class="row">
+        <button class="ghost" id="forget">Olvidar archivo</button>
+        <span id="status" class="status"></span>
+      </div>
+    </section>
+
+    <section class="panel" id="otp-panel">
+      <div class="row">
+        <input type="search" id="search" placeholder="Buscar servicio" />
+        <span id="timer" class="timer"></span>
+      </div>
+      <div id="otp-list" class="otp-list"></div>
+    </section>
+
+    <script type="module" src="manage.js"></script>
+  </body>
+</html>

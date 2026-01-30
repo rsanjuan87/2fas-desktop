@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "2FAS Local OTP",
+  "version": "0.1.0",
+  "description": "Carga un archivo .2fas local, muestra OTPs y permite autofill.",
+  "action": {
+    "default_title": "2FAS Local OTP",
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module",
+    "scripts": ["background.js"]
+  },
+  "permissions": [
+    "storage",
+    "activeTab",
+    "clipboardWrite"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
