@@ -1,5 +1,12 @@
 const api = typeof browser !== "undefined" ? browser : chrome;
 
+api.runtime.onMessage.addListener((message) => {
+  if (message?.type === "get-current-url") {
+    return Promise.resolve({ url: window.location.hostname });
+  }
+  return undefined;
+});
+
 function fillActiveElement(value) {
   const active = document.activeElement;
   if (!active) {

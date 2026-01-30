@@ -3,49 +3,59 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>2FAS Local OTP - Ajustes</title>
+    <title>2FAS Local OTP - Bienvenida</title>
     <link rel="stylesheet" href="popup.css" />
     <style>
       body {
-        width: auto;
-        max-width: 600px;
+        width: 100%;
         margin: 0;
         padding: 20px;
         background: #0f1419;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
-      .manage-panel {
+      .onboarding-panel {
         display: flex;
         flex-direction: column;
         gap: 20px;
+        width: 100%;
+        max-width: 400px;
       }
-      .manage-section {
+      .welcome-header {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+      .welcome-header h1 {
+        margin: 0 0 8px;
+        font-size: 24px;
+        font-weight: 700;
+        color: #f3f4f6;
+      }
+      .welcome-header p {
+        margin: 0;
+        font-size: 13px;
+        color: #9ca3af;
+        line-height: 1.5;
+      }
+      .onboarding-section {
         background: #1a1f27;
         border: 1px solid #1f2632;
         border-radius: 8px;
-        padding: 16px;
+        padding: 20px;
       }
-      .manage-section h2 {
+      .onboarding-section h2 {
         margin: 0 0 12px;
         font-size: 14px;
         font-weight: 600;
+        color: #f3f4f6;
       }
       .input-group {
         margin-bottom: 12px;
-        display: flex;
-        gap: 8px;
-        align-items: center;
       }
       .input-group:last-child {
         margin-bottom: 0;
-      }
-      .input-group input[type="file"] {
-        margin-bottom: 0;
-      }
-      .input-group button:first-child {
-        flex: 1;
-      }
-      .input-group button:last-child {
-        flex-shrink: 0;
       }
       input[type="file"] {
         width: 100%;
@@ -66,15 +76,8 @@
         color: #f3f4f6;
         font-size: 13px;
       }
-      .btn-group {
-        display: flex;
-        gap: 8px;
-      }
-      .btn-group button {
-        flex: 1;
-      }
       button {
-        padding: 8px 12px;
+        padding: 10px 16px;
         border-radius: 6px;
         border: none;
         background: #FF5252;
@@ -87,29 +90,37 @@
       button:hover {
         background: #E53935;
       }
-      button.secondary {
-        background: transparent;
-        border: 1px solid #2a3340;
-        color: #9ca3af;
+      #status {
+        display: block;
+        margin-top: 12px;
+        padding: 8px;
+        font-size: 12px;
+        border-radius: 4px;
+        text-align: center;
+        min-height: 16px;
       }
-      button.secondary:hover {
-        background: #1f2632;
-        color: #f3f4f6;
+      #unlock-section {
+        display: none;
       }
     </style>
   </head>
   <body>
-    <div class="manage-panel">
-      <div class="manage-section">
+    <div class="onboarding-panel">
+      <div class="welcome-header">
+        <h1>2FAS Local OTP</h1>
+        <p>Carga tu archivo de respaldo .2fas para comenzar a usar códigos de autenticación localmente.</p>
+      </div>
+
+      <div class="onboarding-section">
         <h2>Cargar archivo .2fas</h2>
         <div class="input-group">
           <input type="file" id="file-input" accept=".2fas,application/json" style="display: none;" />
           <button id="load-file">Seleccionar archivo</button>
-          <button class="secondary" id="forget" style="display: none;">Olvidar</button>
         </div>
+        <span id="status" class="status"></span>
       </div>
 
-      <div class="manage-section" id="unlock-section" style="display: none;">
+      <div class="onboarding-section" id="unlock-section">
         <h2>Desbloquear</h2>
         <div class="input-group">
           <input
@@ -121,24 +132,8 @@
           <button id="unlock">Desbloquear</button>
         </div>
       </div>
-
-      <div class="manage-section">
-        <h2>Estado</h2>
-        <span id="status" class="status"></span>
-      </div>
-
-      <div class="manage-section" id="summary-section" style="display: none;">
-        <h2>Resumen</h2>
-        <span id="summary" style="color: #9ca3af; font-size: 13px;"></span>
-      </div>
-
-      <div class="manage-section">
-        <h2>Servicios</h2>
-        <div id="otp-list" class="otp-list"></div>
-      </div>
-
     </div>
 
-    <script type="module" src="manage.js"></script>
+    <script type="module" src="onboarding.js"></script>
   </body>
 </html>

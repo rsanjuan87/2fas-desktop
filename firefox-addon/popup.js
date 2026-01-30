@@ -7,6 +7,7 @@ const timerEl = document.getElementById("timer");
 const searchInput = document.getElementById("search");
 
 let services = [];
+let suggestedIds = new Set();
 let timerHandle = null;
 
 function setStatus(message, isError = false) {
@@ -86,6 +87,10 @@ function renderServices(filter = "") {
   filtered.forEach((service) => {
     const item = document.createElement("div");
     item.className = "otp-item";
+    
+    if (suggestedIds.has(service.id)) {
+      item.classList.add("suggested");
+    }
 
     item.addEventListener("click", async () => {
       try {
@@ -179,40 +184,81 @@ function startTimer() {
 }
 
 async function loadExistingServices() {
-  const response = await api.runtime.sendMessage({ type: "get-services" });
-  if (response?.ok) {
-    services = response.services || [];
-    renderServices(searchInput.value);
-    startTimer();
-    setStatus("Servicios cargados.");
-  } else if (response?.needsUnlock) {
-    setStatus("Archivo cargado. Desbloquea en Ajustes.");
-    document.querySelector(".toolbar").style.display = "none";
-    const noFile = document.createElement("div");
-    noFile.className = "no-file";
-    noFile.innerHTML = `
-      <p>Carga y desbloquea tu archivo .2fas desde Ajustes.</p>
-      <button id="open-admin-from-popup" class="primary-btn">Abrir Ajustes</button>
-    `;
-    document.querySelector(".otp-panel").insertBefore(noFile, document.querySelector(".otp-list"));
-    document.getElementById("open-admin-from-popup").addEventListener("click", async () => {
-      const url = api.runtime.getURL("manage.html");
-      await api.tabs.create({ url });
-    });
-  } else {
-    setStatus("Carga un archivo en Ajustes.");
-    document.querySelector(".toolbar").style.display = "none";
-    const noFile = document.createElement("div");
-    noFile.className = "no-file";
-    noFile.innerHTML = `
-      <p>Carga tu archivo .2fas para empezar.</p>
-      <button id="open-admin-from-popup" class="primary-btn">Abrir Ajustes</button>
-    `;
-    document.querySelector(".otp-panel").insertBefore(noFile, document.querySelector(".otp-list"));
-    document.getElementById("open-admin-from-popup").addEventListener("click", async () => {
-      const url = api.runtime.getURL("manage.html");
-      await api.tabs.create({ url });
-    });
+  try {
+    const [tab] = await api.tabs.query({ active: true, currentWindow: true });
+    let currentHostname = "";
+    
+    // Try to get hostname from tab URL directly
+    if (tab?.url) {
+      try {
+        const url = new URL(tab.url);
+        currentHostname = url.hostname || "";
+      } catch (err) {
+        // Invalid URL
+      }
+    }
+    
+    // Fallback: try content script if tab URL not available
+    if (!currentHostname && tab?.id) {
+      try {
+        const response = await api.tabs.sendMessage(tab.id, { type: "get-current-url" });
+        currentHostname = response?.url || "";
+      } catch (err) {
+        // Content script might not be available
+      }
+    }
+
+    const response = await api.runtime.sendMessage({ type: "get-services" });
+    if (response?.ok) {
+      services = response.services || [];
+      suggestedIds.clear();
+      
+      // Sort services: suggested first (matching current hostname), then rest
+      if (currentHostname) {
+        const suggested = services.filter(s => 
+          s.name.toLowerCase().includes(currentHostname.toLowerCase()) ||
+          (s.account && s.account.toLowerCase().includes(currentHostname.toLowerCase()))||
+          (s.account && s.account.split("@")[1]?.split(".")[0]?.toLowerCase().includes(currentHostname.toLowerCase()))
+        );
+        suggested.forEach(s => suggestedIds.add(s.id));
+        const others = services.filter(s => !suggested.includes(s));
+        services = [...suggested, ...others];
+      }
+      
+      renderServices(searchInput.value);
+      startTimer();
+      setStatus("Servicios cargados.");
+    } else if (response?.needsUnlock) {
+      setStatus("Archivo cargado. Desbloquea en Ajustes.");
+      document.querySelector(".toolbar").style.display = "none";
+      const noFile = document.createElement("div");
+      noFile.className = "no-file";
+      noFile.innerHTML = `
+        <p>Carga y desbloquea tu archivo .2fas desde Ajustes.</p>
+        <button id="open-admin-from-popup" class="primary-btn">Abrir Ajustes</button>
+      `;
+      document.querySelector(".otp-panel").insertBefore(noFile, document.querySelector(".otp-list"));
+      document.getElementById("open-admin-from-popup").addEventListener("click", async () => {
+        const url = api.runtime.getURL("manage.html");
+        await api.tabs.create({ url });
+      });
+    } else {
+      setStatus("Carga un archivo en Ajustes.");
+      document.querySelector(".toolbar").style.display = "none";
+      const noFile = document.createElement("div");
+      noFile.className = "no-file";
+      noFile.innerHTML = `
+        <p>Carga tu archivo .2fas para empezar.</p>
+        <button id="open-admin-from-popup" class="primary-btn">Abrir Ajustes</button>
+      `;
+      document.querySelector(".otp-panel").insertBefore(noFile, document.querySelector(".otp-list"));
+      document.getElementById("open-admin-from-popup").addEventListener("click", async () => {
+        const url = api.runtime.getURL("manage.html");
+        await api.tabs.create({ url });
+      });
+    }
+  } catch (err) {
+    setStatus("Error al cargar servicios.");
   }
 }
 

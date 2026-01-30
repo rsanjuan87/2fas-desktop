@@ -7,11 +7,16 @@ const passphraseInput = document.getElementById("passphrase");
 const statusEl = document.getElementById("status");
 const otpListEl = document.getElementById("otp-list");
 const timerEl = document.getElementById("timer");
-const searchInput = document.getElementById("search");
+const searchInput = document.getElementById("search"); // puede ser null en manage.html
 const forgetBtn = document.getElementById("forget");
+const unlockSection = document.getElementById("unlock-section");
+const forgetSection = document.getElementById("forget");
+const summarySection = document.getElementById("summary-section");
+const summaryEl = document.getElementById("summary");
 
 let services = [];
 let timerHandle = null;
+let fileLoaded = false;
 
 function setStatus(message, isError = false) {
   statusEl.textContent = message || "";
@@ -86,6 +91,10 @@ function renderServices(filter = "") {
     otpListEl.innerHTML = "<div class=\"status\">Sin servicios.</div>";
     return;
   }
+
+  // Actualizar resumen
+  summaryEl.textContent = `${services.length} servicio${services.length !== 1 ? "s" : ""} cargado${services.length !== 1 ? "s" : ""}`;
+  summarySection.style.display = "block";
 
   filtered.forEach((service) => {
     const item = document.createElement("div");
@@ -202,54 +211,119 @@ async function loadExistingServices() {
   const response = await api.runtime.sendMessage({ type: "get-services" });
   if (response?.ok) {
     services = response.services || [];
-    renderServices(searchInput.value);
+    fileLoaded = true;
+    renderServices(searchInput?.value || "");
     startTimer();
+    forgetSection.style.display = "block";
+    unlockSection.style.display = "none";
+    passphraseInput.value = "";
     setStatus("Servicios cargados.");
   } else if (response?.needsUnlock) {
+    fileLoaded = true;
+    summarySection.style.display = "none";
+    unlockSection.style.display = "block";
+    forgetSection.style.display = "block";
+    passphraseInput.value = "";
     setStatus("Archivo cargado. Ingresa contraseña para desbloquear.");
   } else {
+    fileLoaded = false;
+    summarySection.style.display = "none";
+    unlockSection.style.display = "none";
+    forgetSection.style.display = "none";
     setStatus("Carga un archivo .2fas para comenzar.");
   }
 }
 
 loadFileBtn.addEventListener("click", async () => {
+  fileInput.click();
+});
+
+fileInput.addEventListener("change", async () => {
   const file = fileInput.files?.[0];
   if (!file) {
     setStatus("Selecciona un archivo .2fas.", true);
     return;
   }
+  setStatus("Cargando archivo...");
   const text = await file.text();
   const result = await api.runtime.sendMessage({ type: "load-file", fileContent: text });
   if (result?.ok) {
+    fileLoaded = true;
     services = [];
     renderServices();
-    setStatus("Archivo cargado. Ahora desbloquea.");
+    passphraseInput.value = "";
+    setStatus("Archivo cargado. Intentando desbloquear automáticamente...");
+    
+    // Try to auto-unlock with saved password
+    const stored = await api.storage.local.get(["savedPassword"]);
+    if (stored.savedPassword) {
+      const response = await api.runtime.sendMessage({ type: "unlock", passphrase: stored.savedPassword });
+      if (response?.ok) {
+        services = response.services || [];
+        renderServices(searchInput?.value || "");
+        startTimer();
+        unlockSection.style.display = "none";
+        forgetSection.style.display = "block";
+        setStatus("✓ Desbloqueado automáticamente.");
+      } else {
+        unlockSection.style.display = "block";
+        forgetSection.style.display = "block";
+        passphraseInput.focus();
+        setStatus("⚠ Contraseña guardada inválida. Ingresa una nueva.");
+      }
+    } else {
+      unlockSection.style.display = "block";
+      forgetSection.style.display = "block";
+      passphraseInput.focus();
+      setStatus("Por favor, ingresa la contraseña para desbloquear.");
+    }
   } else {
-    setStatus("No se pudo guardar el archivo.", true);
+    fileLoaded = false;
+    summarySection.style.display = "none";
+    unlockSection.style.display = "none";
+    forgetSection.style.display = "none";
+    setStatus("Error: No se pudo cargar el archivo.", true);
   }
 });
 
 unlockBtn.addEventListener("click", async () => {
   const passphrase = passphraseInput.value;
+  if (!passphrase) {
+    setStatus("Por favor, ingresa la contraseña.", true);
+    return;
+  }
+  setStatus("Desbloqueando...");
   const response = await api.runtime.sendMessage({ type: "unlock", passphrase });
   if (response?.ok) {
+    // Save password for auto-unlock next time
+    await api.storage.local.set({ savedPassword: passphrase });
     services = response.services || [];
-    renderServices(searchInput.value);
+    renderServices(searchInput?.value || "");
     startTimer();
-    setStatus("Servicios desbloqueados.");
+    unlockSection.style.display = "none";
+    passphraseInput.value = "";
+    setStatus("✓ Servicios desbloqueados.");
   } else {
-    setStatus(response?.error || "No se pudo desbloquear.", true);
+    passphraseInput.value = "";
+    passphraseInput.focus();
+    setStatus(response?.error || "⚠ Contraseña incorrecta.", true);
   }
 });
 
 forgetBtn.addEventListener("click", async () => {
   await api.runtime.sendMessage({ type: "forget" });
+  await api.storage.local.remove(["savedPassword"]);
   services = [];
+  fileLoaded = false;
   renderServices();
-  setStatus("Archivo olvidado.");
+  passphraseInput.value = "";
+  summarySection.style.display = "none";
+  unlockSection.style.display = "none";
+  forgetSection.style.display = "none";
+  setStatus("Archivo olvidado. Selecciona uno nuevo para continuar.");
 });
 
-searchInput.addEventListener("input", () => {
+searchInput?.addEventListener("input", () => {
   renderServices(searchInput.value);
 });
 

@@ -9,6 +9,16 @@ async function loadStoredFile() {
   return cachedFileContent;
 }
 
+// Check on first install or update
+api.runtime.onInstalled.addListener(async (details) => {
+  if (details.reason === "install") {
+    const data = await api.storage.local.get(["onboardingComplete"]);
+    if (!data.onboardingComplete) {
+      api.tabs.create({ url: "onboarding.html" });
+    }
+  }
+});
+
 function base64ToBytes(base64) {
   const binary = atob(base64);
   const bytes = new Uint8Array(binary.length);
